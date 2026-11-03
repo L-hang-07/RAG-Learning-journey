@@ -218,3 +218,24 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+.vscode/
+
+# ===== 自定义 RAG 学习专属忽略 =====
+# 本地知识库数据文件夹（如果你以后要放 PDF 或 TXT 测试文件）
+data/
+docs/
+*.pdf
+*.txt
+*.docx
+
+# 向量数据库本地生成文件
+*.sqlite3
+*.faiss
+*.index
+*.pkl
+*.bin
+*.safetensors
+
+# 模型下载缓存（如果你以后用 HuggingFace）
+.cache/
