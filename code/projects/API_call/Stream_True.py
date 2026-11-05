@@ -80,15 +80,15 @@ def call_api_with_retry(session,messages):
             #状态码为2xx表示成功
             if response.ok:
                 #解析SSE
-                parts = []
+                parts = []#创建了一个空列表，按顺序收集每个流式片段里的文本内容，循环结束后parts里就是完整的回答
                 try:
                     for line in response.iter_lines():
-                        if not line:
+                        if not line:#目的是跳过空行
                             continue
                         line = line.decode("utf-8").strip()
                         if not line.startswith("data:"):
                             continue
-                        data_str = line[5:].strip()
+                        data_str = line[5:].strip()#表示获取五个字符
                         if data_str =="[DONE]":
                             break
                         try:
@@ -97,9 +97,12 @@ def call_api_with_retry(session,messages):
                             continue
                         delta = chunk["choices"][0].get("delta",{})
                         piece = delta.get("content")
+                        choice = chunk.get("choices",[{}][0])
                         if piece:
                             parts.append(piece)
                             print(piece,end="",flush=True) #打字机输出
+                        if choice.get("finish_reason"):
+                            finish_reason = choice["finish_reason"]
                     print() #换行
                 except (requests.exceptions.ChunkedEncodingError,
                         requests.exceptions.ConnectionError) as e:
@@ -111,8 +114,15 @@ def call_api_with_retry(session,messages):
                         continue
                     print("\n[失败]流式传输中断，已达最大重试")
                     return None
-                #返回一个同意结构，让下游代码不用改
-                return {"choices":[{"message":{"content":"".join(parts)}}]}
+                #返回一个同意结构，归一化成和非刘氏一样的结构，让下游代码不用改
+                return {
+                    "choices":[{
+                        "message":{"role":"assistant",
+                                    "content":"".join(parts)
+                                    },
+                        "finish_reason":finish_reason or "stop",
+                                    }]
+                    }
             
             #可重试的状态码，并且有重试次数
             if response.status_code in RETRYABLE_STATUS_CODES and attempt < MAX_RETRIES:
@@ -182,21 +192,23 @@ def main():
             print("正在生成回复，请稍后")
             data = call_api_with_retry(session,conversation)
 
-            if data is None:
+            if not data:
                 print("[错误]，暂时无法获得回答")
                 #避免污染上下文，导致后续请求出错，将刚才用户的输入移除
                 conversation.pop()
                 continue
 
-            #提取AI的回复
             try:
                 reply = data["choices"][0]["message"]["content"]
-                #将AI的回复加入对话历史
-                conversation.append({"role":"assistant","content":reply})
-            except (KeyError,IndexError) as e:
-                print("AI：抱歉，收到的相应格式异常\n")
-                #清理掉有问题的用户消息
+                if not isinstance(reply, str) or not reply.strip():
+                    raise ValueError("空回复或类型异常")
+            except (KeyError, IndexError, TypeError, ValueError) as e:
+                print(f"AI：抱歉，响应格式异常: {e}")
                 conversation.pop()
+                continue
+
+            #将AI的回复加入对话历史
+            conversation.append({"role":"assistant","content":reply})
 
 if __name__ == "__main__":
     main()
