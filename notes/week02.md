@@ -30,14 +30,15 @@
     
     针对特定推理模型的策略：对于DeepSeek-R1、QwQ、OpenAI o-series这类专门的推理模型，官方建议将CoT等指令放入 user 消息，而 system 最好留空或仅放最基础的安全设定。
     
-    assistant[在写入时可以用json.jumps将内容转换为json格式再写入]
+    assistant
+    [在写入时可以用json.jumps将内容转换为json格式再写入]
     代表了模型的历史回复，最关键的用途就是记录Few-Shot的期望输出部分等
     
     必须与 user 消息配对：一个 assistant 示例消息必须紧跟在一个 user 示例消息之后，构成一个完整的“输入-输出”对，绝不能单独出现。
     
     示例中的CoT展示：如果想通过模仿来教模型如何进行推理，可以在 assistant 的示例回复中完整展示包含推理步骤的答案。
 
-(5)在写提示词工程时建议单独写几个变量去记录例子等，用循环如for key,value in a_example添加到历史消息中
+(5)在写提示词工程时建议单独写几个变量去记录例子等，用循环如for key,value in a_example.items添加到历史消息中
 
 #-------JSON(python中可以调用json模块)
 (1)JSON分为JSON对象和JSON数组

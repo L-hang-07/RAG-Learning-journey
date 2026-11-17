@@ -2,6 +2,7 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+from langchain_community import Tongyi
 
 # 获取当前文件(Aliyun_01.py)的绝对路径
 current_dir = Path(__file__).resolve().parent
@@ -29,16 +30,21 @@ prompt = """
     你的输出必须以纯文本形式返回，不要编造内容，条理清晰先写代码再写分析
 
 """
-
 client = OpenAI(
+    model_name = "qwen3.8-max",
     base_url = "https://ws-7cvheikfp81bmhhq.cn-beijing.maas.aliyuncs.com/compatible-mode/v1",
-    api_key = os.getenv("ALIYUNBAILIAN_API_KEY"),
+    api_key = os.getenv("DASHSCOPE_API_KEY"),
+    stream = True
 )
 
-messages =[
-    {"role":"system","content":prompt},
-    {"role":"user","content":"你好"}
+
+messages = [
+    {"role":"system","content":prompt}
 ]
+llm = Tongyi(
+    client = client,
+    prompt = prompt
+)
 
 response = client.chat.completions.create(
     model = "qwen3.8-max",
@@ -47,10 +53,5 @@ response = client.chat.completions.create(
 )
 
 for chunk in response:
-    if not chunk.choices:
-        continue
-
-    
     piece = chunk.choices[0].delta.content
-    if piece:
-        print(piece,end = "",flush = True)
+    print(piece,end = "",flush = True)
