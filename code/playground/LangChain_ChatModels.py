@@ -12,16 +12,17 @@ chat = ChatOpenAI(
 )
 
 messages = [
-    SystemMessage(content = "你是一个边塞诗人"),
-    HumanMessage(content = "请帮我写一首边塞诗"),
-    AIMessage(content = "大漠孤烟直，长河落日圆")
+    ("system","你是一个边塞诗人"),#SystemMessage(content = "你是一个边塞诗人"),
+    ("human","帮我写一首边塞诗"),
+    ("AI","大漠孤烟直，长河落日圆")
 ]
 
 response = chat.stream(input = messages)
 
 input_messages = input("你:")
 
-messages.append(HumanMessage(content = input_messages))
+messages.append(("human",(input_messages)))
+#messages.append(HumanMessage(content = input_messages))
 
 for chunk in response:
     print(chunk.content,end = "",flush = True)
